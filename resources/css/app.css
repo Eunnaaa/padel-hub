@@ -1,3 +1,69 @@
+@import "tw-animate-css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --background: #F8FAFC;
+        --foreground: #0F172A;
+
+        --card: #FFFFFF;
+        --card-foreground: #0F172A;
+
+        --popover: #FFFFFF;
+        --popover-foreground: #0F172A;
+
+        --primary: #0F172A;
+        --primary-foreground: #FFFFFF;
+
+        --secondary: #E2E8F0;
+        --secondary-foreground: #0F172A;
+
+        --muted: #F1F5F9;
+        --muted-foreground: #64748B;
+
+        --accent: #22C55E;
+        --accent-foreground: #FFFFFF;
+
+        --destructive: #DC2626;
+        --destructive-foreground: #FFFFFF;
+
+        --border: #E2E8F0;
+        --input: #E2E8F0;
+        --ring: #22C55E;
+
+        --chart-1: #22C55E;
+        --chart-2: #0F172A;
+        --chart-3: #F59E0B;
+        --chart-4: #3B82F6;
+        --chart-5: #8B5CF6;
+
+        --radius: 0.75rem;
+
+        --sidebar: #0F172A;
+        --sidebar-foreground: #FFFFFF;
+        --sidebar-primary: #22C55E;
+        --sidebar-primary-foreground: #0F172A;
+        --sidebar-accent: #1E293B;
+        --sidebar-accent-foreground: #FFFFFF;
+        --sidebar-border: #1E293B;
+        --sidebar-ring: #22C55E;
+    }
+
+    * {
+        @apply border-border outline-ring;
+    }
+
+    ::selection {
+        @apply bg-brand-accent/20 text-brand;
+    }
+
+    body {
+        @apply bg-background font-sans text-foreground antialiased;
+    }
+
+    html {
+        @apply font-sans;
+    }
+}

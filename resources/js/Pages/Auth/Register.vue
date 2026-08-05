@@ -9,6 +9,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 const form = useForm({
     name: '',
     email: '',
+    phone: '',
     password: '',
     password_confirmation: '',
 });
@@ -25,6 +26,9 @@ const submit = () => {
 <template>
     <GuestLayout>
         <Head title="Register" />
+
+        <h1 class="mb-1 text-2xl font-bold tracking-tight text-brand">Buat akun pemain</h1>
+        <p class="mb-8 text-sm text-gray-500">Registrasi di sini untuk akun pemain. Akun admin dikelola terpisah oleh tim PadelHub.</p>
 
         <form @submit.prevent="submit">
             <div>
@@ -56,6 +60,22 @@ const submit = () => {
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
+            </div>
+
+            <div class="mt-4">
+                <InputLabel for="phone" value="Phone Number" />
+
+                <TextInput
+                    id="phone"
+                    type="tel"
+                    class="mt-1 block w-full"
+                    v-model="form.phone"
+                    required
+                    autocomplete="tel"
+                    placeholder="+62 812 3456 7890"
+                />
+
+                <InputError class="mt-2" :message="form.errors.phone" />
             </div>
 
             <div class="mt-4">
@@ -97,9 +117,9 @@ const submit = () => {
             <div class="mt-4 flex items-center justify-end">
                 <Link
                     :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
                 >
-                    Already registered?
+                    Sudah punya akun?
                 </Link>
 
                 <PrimaryButton
@@ -107,7 +127,7 @@ const submit = () => {
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
                 >
-                    Register
+                    Daftar
                 </PrimaryButton>
             </div>
         </form>

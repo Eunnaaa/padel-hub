@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('courts', function (Blueprint $table) {
+            $table->string('type')->default('indoor')->after('name');
+            $table->string('image')->nullable()->after('price_per_hour');
+            $table->decimal('peak_price_per_hour', 10, 2)->nullable()->after('price_per_hour');
+            $table->time('maintenance_from')->nullable()->after('status');
+            $table->time('maintenance_to')->nullable()->after('maintenance_from');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('courts', function (Blueprint $table) {
+            $table->dropColumn(['type', 'image', 'peak_price_per_hour', 'maintenance_from', 'maintenance_to']);
+        });
+    }
+};

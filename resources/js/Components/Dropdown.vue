@@ -6,11 +6,13 @@ const props = withDefaults(
         align?: 'left' | 'right';
         width?: '48';
         contentClasses?: string;
+        openUp?: boolean;
     }>(),
     {
         align: 'right',
         width: '48',
         contentClasses: 'py-1 bg-white',
+        openUp: false,
     },
 );
 
@@ -30,13 +32,20 @@ const widthClass = computed(() => {
 });
 
 const alignmentClasses = computed(() => {
+    if (props.openUp) {
+        if (props.align === 'left') {
+            return 'ltr:origin-bottom-left rtl:origin-bottom-right start-0';
+        } else if (props.align === 'right') {
+            return 'ltr:origin-bottom-right rtl:origin-bottom-left end-0';
+        }
+        return 'origin-bottom';
+    }
     if (props.align === 'left') {
         return 'ltr:origin-top-left rtl:origin-top-right start-0';
     } else if (props.align === 'right') {
         return 'ltr:origin-top-right rtl:origin-top-left end-0';
-    } else {
-        return 'origin-top';
     }
+    return 'origin-top';
 });
 
 const open = ref(false);
@@ -65,8 +74,8 @@ const open = ref(false);
         >
             <div
                 v-show="open"
-                class="absolute z-50 mt-2 rounded-md shadow-lg"
-                :class="[widthClass, alignmentClasses]"
+                class="absolute z-50 rounded-md shadow-lg"
+                :class="[props.openUp ? 'bottom-full mb-2' : 'mt-2', widthClass, alignmentClasses]"
                 style="display: none"
                 @click="open = false"
             >
