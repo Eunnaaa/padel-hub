@@ -140,3 +140,22 @@ test('daftar check-in hanya menampilkan booking venue milik owner', function () 
             ->has('bookings', 1)
             ->where('bookings.0.id', $mine->id));
 });
+
+test('check-in dan scan menolak booking yang sudah dibatalkan atau kedaluwarsa', function () {
+    $booking = makePaidBooking(User::factory()->create(), $this->court);
+    $booking->update(['status' => 'cancelled']);
+
+    $this->actingAs($this->owner)->get("/checkin/{$booking->id}/scan")
+        ->assertStatus(422);
+
+    $this->actingAs($this->owner)->patch("/checkin/{$booking->id}", ['status' => 'checked_in'])
+        ->assertStatus(422);
+
+    $booking->update(['status' => 'expired']);
+
+    $this->actingAs($this->owner)->get("/checkin/{$booking->id}/scan")
+        ->assertStatus(422);
+
+    $this->actingAs($this->owner)->patch("/checkin/{$booking->id}", ['status' => 'checked_in'])
+        ->assertStatus(422);
+});

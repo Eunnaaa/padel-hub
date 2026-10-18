@@ -13,11 +13,13 @@ class ExpireBookingLocks extends Command
 
     public function handle(): int
     {
-        Booking::where('status', 'pending')
+        $count = Booking::where('status', 'pending')
             ->where('payment_status', '!=', 'paid')
             ->whereNotNull('locked_until')
             ->where('locked_until', '<', now())
             ->update(['status' => 'expired']);
+
+        $this->info("Expired {$count} pending booking lock(s).");
 
         return self::SUCCESS;
     }

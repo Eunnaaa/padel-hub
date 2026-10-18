@@ -3,6 +3,7 @@
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\Payment;
+use App\Models\Promo;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Support\Str;
@@ -125,4 +126,260 @@ test('webhook midtrans dengan signature valid meng-update pembayaran', function 
     expect(Payment::where('transaction_reference', 'MID-ABC123')->first()->status)->toBe('paid');
     expect($booking->fresh()->payment_status)->toBe('paid');
     expect($booking->fresh()->status)->toBe('confirmed');
+});
+
+test('pembayaran ditolak jika lock booking sudah kedaluwarsa', function () {
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $booking->update([
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'locked_until' => now()->subMinute(),
+    ]);
+
+    $this->actingAs($user)->post("/bookings/{$booking->id}/pay", ['method' => 'qris'])
+        ->assertSessionHasErrors('error');
+
+    expect($booking->fresh()->status)->toBe('expired');
+});
+
+test('bisa menggunakan kode promo persentase pada checkout', function () {
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $booking->update([
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'total_amount' => 100000,
+        'locked_until' => now()->addMinutes(5),
+    ]);
+
+    $promo = Promo::create([
+        'code' => 'TESTDISKON20',
+        'title' => 'Diskon 20%',
+        'discount_type' => 'percent',
+        'discount_value' => 20,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDays(5),
+        'quota' => 10,
+        'used_count' => 0,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)->post("/bookings/{$booking->id}/apply-promo", ['code' => 'testdiskon20'])
+        ->assertSessionHasNoErrors();
+
+    $booking->refresh();
+    expect($booking->promo_id)->toBe($promo->id);
+    expect((float) $booking->discount_amount)->toBe(20000.0);
+    expect((float) $booking->total_amount)->toBe(80000.0);
+});
+
+test('bisa menggunakan kode promo nominal tetap pada checkout', function () {
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $booking->update([
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'total_amount' => 100000,
+        'locked_until' => now()->addMinutes(5),
+    ]);
+
+    $promo = Promo::create([
+        'code' => 'TESTHEMAT25',
+        'title' => 'Potongan 25rb',
+        'discount_type' => 'fixed',
+        'discount_value' => 25000,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDays(5),
+        'quota' => 10,
+        'used_count' => 0,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)->post("/bookings/{$booking->id}/apply-promo", ['code' => 'TESTHEMAT25'])
+        ->assertSessionHasNoErrors();
+
+    $booking->refresh();
+    expect($booking->promo_id)->toBe($promo->id);
+    expect((float) $booking->discount_amount)->toBe(25000.0);
+    expect((float) $booking->total_amount)->toBe(75000.0);
+});
+
+test('kode promo tidak valid ditolak', function () {
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $booking->update([
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'locked_until' => now()->addMinutes(5),
+    ]);
+
+    $this->actingAs($user)->post("/bookings/{$booking->id}/apply-promo", ['code' => 'KODEASAL'])
+        ->assertSessionHasErrors('promo_code');
+});
+
+test('bisa menghapus kode promo yang telah dipasang', function () {
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $promo = Promo::create([
+        'code' => 'TESTHAPUS',
+        'title' => 'Test Hapus',
+        'discount_type' => 'percent',
+        'discount_value' => 50,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDays(5),
+        'is_active' => true,
+    ]);
+
+    $booking->update([
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'promo_id' => $promo->id,
+        'discount_amount' => 50000,
+        'total_amount' => 50000,
+        'locked_until' => now()->addMinutes(5),
+    ]);
+
+    $this->actingAs($user)->delete("/bookings/{$booking->id}/remove-promo")
+        ->assertSessionHasNoErrors();
+
+    $booking->refresh();
+    expect($booking->promo_id)->toBeNull();
+    expect((float) $booking->discount_amount)->toBe(0.0);
+    expect((float) $booking->total_amount)->toBe(100000.0);
+});
+
+test('pembayaran lunas meng-increment used_count promo', function () {
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $promo = Promo::create([
+        'code' => 'TESTUSED',
+        'title' => 'Test Used Count',
+        'discount_type' => 'fixed',
+        'discount_value' => 20000,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDays(5),
+        'quota' => 10,
+        'used_count' => 2,
+        'is_active' => true,
+    ]);
+
+    $booking->update([
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'promo_id' => $promo->id,
+        'discount_amount' => 20000,
+        'total_amount' => 80000,
+        'locked_until' => now()->addMinutes(5),
+    ]);
+
+    $this->actingAs($user)->post("/bookings/{$booking->id}/pay", ['method' => 'qris'])
+        ->assertRedirect('/bookings');
+
+    expect($booking->fresh()->payment_status)->toBe('paid');
+    expect($promo->fresh()->used_count)->toBe(3);
+});
+
+test('webhook midtrans dengan fraud status challenge tidak menandai lunas', function () {
+    config(['midtrans.server_key' => 'test-key']);
+
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $booking->update(['status' => 'pending', 'payment_status' => 'pending']);
+
+    Payment::create([
+        'booking_id' => $booking->id,
+        'amount' => 100000,
+        'method' => 'credit_card',
+        'provider' => 'midtrans',
+        'status' => 'pending',
+        'transaction_reference' => 'MID-CHALLENGE',
+    ]);
+
+    $signature = hash('sha512', 'MID-CHALLENGE'.'200'.'100000'.'test-key');
+
+    $this->postJson('/payments/notification', [
+        'order_id' => 'MID-CHALLENGE',
+        'status_code' => '200',
+        'gross_amount' => '100000',
+        'transaction_status' => 'capture',
+        'fraud_status' => 'challenge',
+        'signature_key' => $signature,
+    ])->assertOk();
+
+    expect(Payment::where('transaction_reference', 'MID-CHALLENGE')->first()->status)->toBe('pending');
+    expect($booking->fresh()->payment_status)->toBe('pending');
+});
+
+test('webhook midtrans status expire mengupdate status booking menjadi expired', function () {
+    config(['midtrans.server_key' => 'test-key']);
+
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $booking->update(['status' => 'pending', 'payment_status' => 'pending']);
+
+    Payment::create([
+        'booking_id' => $booking->id,
+        'amount' => 100000,
+        'method' => 'bank_transfer',
+        'provider' => 'midtrans',
+        'status' => 'pending',
+        'transaction_reference' => 'MID-EXPIRE',
+    ]);
+
+    $signature = hash('sha512', 'MID-EXPIRE'.'200'.'100000'.'test-key');
+
+    $this->postJson('/payments/notification', [
+        'order_id' => 'MID-EXPIRE',
+        'status_code' => '200',
+        'gross_amount' => '100000',
+        'transaction_status' => 'expire',
+        'signature_key' => $signature,
+    ])->assertOk();
+
+    expect(Payment::where('transaction_reference', 'MID-EXPIRE')->first()->status)->toBe('failed');
+    expect($booking->fresh()->status)->toBe('expired');
+});
+
+test('booking dengan tagihan 0 dari promo 100 persen langsung diselesaikan tanpa error snap', function () {
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $booking->update([
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'total_amount' => 0,
+        'locked_until' => now()->addMinutes(5),
+    ]);
+
+    $this->actingAs($user)->post("/bookings/{$booking->id}/pay", ['method' => 'qris'])
+        ->assertRedirect('/bookings');
+
+    expect($booking->fresh()->payment_status)->toBe('paid');
+    expect($booking->fresh()->status)->toBe('confirmed');
+});
+
+test('pembayaran berulang mengupdate record pending alih-alih membuat duplikat', function () {
+    $user = User::factory()->create();
+    $booking = makeBooking($user, $this->court);
+    $booking->update([
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'locked_until' => now()->addMinutes(5),
+    ]);
+
+    $existingPayment = Payment::create([
+        'booking_id' => $booking->id,
+        'amount' => 100000,
+        'method' => 'bank_transfer',
+        'provider' => 'midtrans',
+        'status' => 'pending',
+        'transaction_reference' => 'MID-EXISTING',
+    ]);
+
+    $this->actingAs($user)->post("/bookings/{$booking->id}/pay", ['method' => 'qris'])
+        ->assertRedirect('/bookings');
+
+    expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
+    expect($existingPayment->fresh()->method)->toBe('qris');
+    expect($existingPayment->fresh()->status)->toBe('paid');
 });

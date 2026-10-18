@@ -43,37 +43,37 @@ const closeModal = () => {
 <template>
     <section class="space-y-6">
         <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Delete Account
+            <h2 class="text-base font-black uppercase tracking-tight text-rose-400">
+                Hapus Akun Pengguna
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Once your account is deleted, all of its resources and data will
-                be permanently deleted. Before deleting your account, please
-                download any data or information that you wish to retain.
+            <p class="mt-1 text-xs text-slate-400">
+                Setelah akun dihapus, seluruh data profil, riwayat reservasi, dan transaksi akan dihapus secara permanen.
             </p>
         </header>
 
-        <DangerButton @click="confirmUserDeletion">Delete Account</DangerButton>
+        <button
+            type="button"
+            @click="confirmUserDeletion"
+            class="inline-flex items-center gap-2 rounded-xl border border-rose-500/40 bg-rose-500/15 px-5 py-2.5 text-xs font-bold text-rose-300 transition hover:bg-rose-500/25 hover:text-white"
+        >
+            Hapus Akun Saya
+        </button>
 
         <Modal :show="confirmingUserDeletion" @close="closeModal">
-            <div class="p-6">
-                <h2
-                    class="text-lg font-medium text-gray-900"
-                >
-                    Are you sure you want to delete your account?
+            <div class="p-6 sm:p-8">
+                <h2 class="text-base font-black uppercase tracking-tight text-white">
+                    Konfirmasi Hapus Akun?
                 </h2>
 
-                <p class="mt-1 text-sm text-gray-600">
-                    Once your account is deleted, all of its resources and data
-                    will be permanently deleted. Please enter your password to
-                    confirm you would like to permanently delete your account.
+                <p class="mt-2 text-xs text-slate-400">
+                    Tindakan ini tidak dapat dibatalkan. Masukkan kata sandi kamu untuk mengonfirmasi penghapusan permanen.
                 </p>
 
                 <div class="mt-6">
                     <InputLabel
                         for="password"
-                        value="Password"
+                        value="Kata Sandi Akun"
                         class="sr-only"
                     />
 
@@ -82,27 +82,32 @@ const closeModal = () => {
                         ref="passwordInput"
                         v-model="form.password"
                         type="password"
-                        class="mt-1 block w-3/4"
-                        placeholder="Password"
+                        class="mt-1 block w-full"
+                        placeholder="Masukkan kata sandi kamu"
                         @keyup.enter="deleteUser"
                     />
 
                     <InputError :message="form.errors.password" class="mt-2" />
                 </div>
 
-                <div class="mt-6 flex justify-end">
-                    <SecondaryButton @click="closeModal">
-                        Cancel
-                    </SecondaryButton>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        @click="closeModal"
+                        class="rounded-xl border border-slate-700 bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                    >
+                        Batal
+                    </button>
 
-                    <DangerButton
-                        class="ms-3"
-                        :class="{ 'opacity-25': form.processing }"
+                    <button
+                        type="button"
+                        :class="{ 'opacity-50': form.processing }"
                         :disabled="form.processing"
                         @click="deleteUser"
+                        class="rounded-xl border border-rose-500/40 bg-rose-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-rose-600/30 transition hover:bg-rose-500"
                     >
-                        Delete Account
-                    </DangerButton>
+                        Ya, Hapus Akun
+                    </button>
                 </div>
             </div>
         </Modal>

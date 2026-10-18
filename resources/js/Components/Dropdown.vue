@@ -11,7 +11,7 @@ const props = withDefaults(
     {
         align: 'right',
         width: '48',
-        contentClasses: 'py-1 bg-white',
+        contentClasses: 'py-1 bg-slate-900 border border-slate-800 text-slate-200',
         openUp: false,
     },
 );

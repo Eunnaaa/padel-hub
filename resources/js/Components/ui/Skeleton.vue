@@ -5,5 +5,5 @@ const props = withDefaults(defineProps<{ class?: string }>(), {});
 </script>
 
 <template>
-    <div :class="cn('animate-pulse rounded-md bg-muted', props.class)" />
+    <div :class="cn('animate-pulse rounded-xl bg-slate-800/80', props.class)" />
 </template>

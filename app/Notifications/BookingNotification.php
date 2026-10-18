@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class BookingNotification extends Notification
@@ -17,7 +18,27 @@ class BookingNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        if (! empty($notifiable->email) && in_array(config('mail.default'), ['smtp', 'mailgun', 'resend', 'ses', 'postmark', 'array'])) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $mail = (new MailMessage)
+            ->subject('PadelHub - '.$this->title)
+            ->greeting('Halo, '.($notifiable->name ?? 'Pemain').'!')
+            ->line($this->body);
+
+        if ($this->url) {
+            $mail->action('Lihat Detail', $this->url);
+        }
+
+        return $mail->line('Terima kasih telah berolahraga bersama PadelHub!');
     }
 
     public function toArray(object $notifiable): array

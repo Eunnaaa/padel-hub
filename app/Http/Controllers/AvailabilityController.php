@@ -26,9 +26,10 @@ class AvailabilityController extends Controller
         // ponytail: static fetch + client polling — swap to Reverb broadcast when Redis ready
         return Inertia::render('Availability/Index', [
             'date' => $date,
-            'venues' => Venue::orderBy('name')->get(['id', 'name', 'city']),
-            'courts' => Court::with('venue:id,name')
+            'venues' => Venue::where('status', 'approved')->orderBy('name')->get(['id', 'name', 'city']),
+            'courts' => Court::with('venue:id,name,city')
                 ->where('status', '!=', 'inactive')
+                ->whereHas('venue', fn ($q) => $q->where('status', 'approved'))
                 ->orderBy('name')
                 ->get(),
             'bookings' => $bookings,

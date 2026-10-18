@@ -3,16 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Court;
 use App\Models\Promo;
+use App\Models\Venue;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response|RedirectResponse
     {
-        $base = fn ($q) => $q->where('user_id', Auth::id());
+        $user = Auth::user();
+
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if ($user->isVenueOwner()) {
+            return redirect()->route('venue-dashboard.index');
+        }
+
+        $base = fn ($q) => $q->where('user_id', $user->id);
 
         $stats = [
             'total' => (clone $base)(Booking::query())->count(),
@@ -33,12 +47,43 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $selectedDate = $request->query('date', now()->toDateString());
+        $todayDate = now()->toDateString();
+
+        $courtBookings = Booking::query()
+            ->where('booking_date', $selectedDate)
+            ->where(function ($q) {
+                $q->whereIn('status', ['confirmed', 'checked_in'])
+                    ->orWhere(function ($sq) {
+                        $sq->where('status', 'pending')
+                            ->liveLock();
+                    });
+            })
+            ->get(['court_id', 'start_time', 'end_time', 'status']);
+
+        $featuredCourts = Court::with(['venue:id,name,city,slug,rating'])
+            ->where('status', '!=', 'inactive')
+            ->whereHas('venue', fn ($q) => $q->where('status', 'approved'))
+            ->orderBy('venue_id')
+            ->orderBy('name')
+            ->get(['id', 'venue_id', 'name', 'type', 'price_per_hour', 'status', 'maintenance_from', 'maintenance_to']);
+
+        $featuredVenues = Venue::where('status', 'approved')
+            ->withCount('courts')
+            ->limit(3)
+            ->get();
+
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'upcoming' => $upcoming,
             'promos' => Promo::active()->orderByDesc('ends_at')->limit(3)->get(),
-            'notifications' => Auth::user()->notifications()->limit(5)->get(),
-            'unreadNotifications' => Auth::user()->unreadNotifications()->count(),
+            'notifications' => $user->notifications()->limit(5)->get(),
+            'unreadNotifications' => $user->unreadNotifications()->count(),
+            'featuredVenues' => $featuredVenues,
+            'selectedDate' => $selectedDate,
+            'todayDate' => $todayDate,
+            'courtBookings' => $courtBookings,
+            'featuredCourts' => $featuredCourts,
         ]);
     }
 }

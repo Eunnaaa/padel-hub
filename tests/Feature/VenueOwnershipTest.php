@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Booking;
+use App\Models\Court;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Support\Str;
@@ -75,4 +77,85 @@ test('admin dapat mengakses venue milik siapa pun', function () {
     $venue = makeVenue(User::factory()->create(['role' => 'venue_owner']));
 
     $this->actingAs($admin)->get("/venues/{$venue->id}/edit")->assertOk();
+});
+
+test('venue owner baru membuat venue dengan status pending dan tidak bisa self approve', function () {
+    $owner = User::factory()->create(['role' => 'venue_owner']);
+
+    $this->actingAs($owner)->post('/venues', [
+        'name' => 'Venue Baru',
+        'slug' => 'venue-baru-'.Str::random(6),
+        'address' => 'Jl. Baru No. 1',
+        'city' => 'Jakarta',
+        'status' => 'approved', // mencoba memanipulasi status
+    ])->assertRedirect('/venues');
+
+    $venue = Venue::where('owner_id', $owner->id)->latest('id')->first();
+    expect($venue)->not->toBeNull();
+    expect($venue->status)->toBe('pending');
+
+    // Coba manipulasi status lewat update
+    $this->actingAs($owner)->put("/venues/{$venue->id}", [
+        'name' => 'Venue Baru Diupdate',
+        'slug' => $venue->slug,
+        'address' => 'Jl. Baru No. 1',
+        'city' => 'Jakarta',
+        'status' => 'approved',
+    ])->assertRedirect('/venues');
+
+    expect($venue->fresh()->status)->toBe('pending');
+});
+
+test('lapangan tidak dapat dihapus jika memiliki booking aktif di masa depan', function () {
+    $owner = User::factory()->create(['role' => 'venue_owner']);
+    $venue = makeVenue($owner);
+    $court = Court::create([
+        'venue_id' => $venue->id,
+        'name' => 'Court Deletion Test',
+        'price_per_hour' => 100000,
+        'status' => 'available',
+    ]);
+
+    Booking::create([
+        'user_id' => User::factory()->create()->id,
+        'court_id' => $court->id,
+        'booking_date' => now()->addDays(2)->toDateString(),
+        'start_time' => '10:00',
+        'end_time' => '11:00',
+        'status' => 'confirmed',
+        'payment_status' => 'paid',
+        'total_amount' => 100000,
+    ]);
+
+    $this->actingAs($owner)->delete("/courts/{$court->id}")
+        ->assertStatus(422);
+
+    expect(Court::find($court->id))->not->toBeNull();
+});
+
+test('venue tidak dapat dihapus jika lapangannya memiliki booking aktif', function () {
+    $owner = User::factory()->create(['role' => 'venue_owner']);
+    $venue = makeVenue($owner);
+    $court = Court::create([
+        'venue_id' => $venue->id,
+        'name' => 'Court Venue Test',
+        'price_per_hour' => 100000,
+        'status' => 'available',
+    ]);
+
+    Booking::create([
+        'user_id' => User::factory()->create()->id,
+        'court_id' => $court->id,
+        'booking_date' => now()->addDays(2)->toDateString(),
+        'start_time' => '10:00',
+        'end_time' => '11:00',
+        'status' => 'confirmed',
+        'payment_status' => 'paid',
+        'total_amount' => 100000,
+    ]);
+
+    $this->actingAs($owner)->delete("/venues/{$venue->id}")
+        ->assertStatus(422);
+
+    expect(Venue::find($venue->id))->not->toBeNull();
 });

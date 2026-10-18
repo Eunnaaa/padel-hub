@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ArrowRight, LogOut, MailCheck } from '@lucide/vue';
 
 const props = defineProps<{
     status?: string;
@@ -21,38 +21,47 @@ const verificationLinkSent = computed(
 
 <template>
     <GuestLayout>
-        <Head title="Email Verification" />
+        <Head title="Verifikasi Email" />
 
-        <div class="mb-4 text-sm text-gray-600">
-            Thanks for signing up! Before getting started, could you verify your
-            email address by clicking on the link we just emailed to you? If you
-            didn't receive the email, we will gladly send you another.
+        <div class="mb-6">
+            <div class="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 shadow-inner">
+                <MailCheck class="h-5 w-5" />
+            </div>
+            <h1 class="text-2xl font-extrabold tracking-tight text-white">Verifikasi Alamat Email</h1>
+            <p class="mt-1 text-xs leading-relaxed text-slate-400">
+                Terima kasih telah mendaftar di PadelHub! Silakan periksa kotak masuk emailmu dan klik tautan verifikasi yang kami kirimkan.
+            </p>
         </div>
 
         <div
-            class="mb-4 text-sm font-medium text-green-600"
             v-if="verificationLinkSent"
+            class="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-medium text-emerald-300"
         >
-            A new verification link has been sent to the email address you
-            provided during registration.
+            Tautan verifikasi baru telah berhasil dikirimkan ke alamat email yang kamu daftarkan.
         </div>
 
-        <form @submit.prevent="submit">
-            <div class="mt-4 flex items-center justify-between">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
+        <form @submit.prevent="submit" class="space-y-4">
+            <div class="pt-2">
+                <button
+                    type="submit"
+                    class="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:from-emerald-400 hover:to-green-500 hover:shadow-emerald-500/35 active:scale-[0.98] disabled:opacity-50"
                     :disabled="form.processing"
                 >
-                    Resend Verification Email
-                </PrimaryButton>
+                    <span>{{ form.processing ? 'Mengirim Ulang…' : 'Kirim Ulang Email Verifikasi' }}</span>
+                    <ArrowRight class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </button>
+            </div>
 
+            <div class="pt-3 text-center">
                 <Link
                     :href="route('logout')"
                     method="post"
                     as="button"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
-                    >Log Out</Link
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition hover:text-rose-400"
                 >
+                    <LogOut class="h-3.5 w-3.5" />
+                    <span>Keluar dari Akun</span>
+                </Link>
             </div>
         </form>
     </GuestLayout>

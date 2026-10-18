@@ -27,6 +27,7 @@ class CheckinController extends Controller
     {
         abort_unless($this->managesBooking($booking), 403);
         abort_unless($booking->payment_status === 'paid', 422, 'Not paid yet.');
+        abort_if(in_array($booking->status, ['cancelled', 'expired']), 422, 'Booking sudah dibatalkan atau kedaluwarsa.');
 
         $booking->update(['status' => $request->validated('status')]);
 
@@ -37,6 +38,7 @@ class CheckinController extends Controller
     {
         abort_unless($this->managesBooking($booking), 403);
         abort_unless($booking->payment_status === 'paid', 403, 'Belum dibayar.');
+        abort_if(in_array($booking->status, ['cancelled', 'expired']), 422, 'Tiket booking ini sudah dibatalkan atau kedaluwarsa.');
 
         return Inertia::render('Checkin/Scan', [
             'booking' => $booking->load('court.venue', 'user', 'payment'),

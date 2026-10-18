@@ -27,10 +27,16 @@ class VenueController extends Controller
 
     public function store(VenueRequest $request): RedirectResponse
     {
-        Venue::create([
-            ...$request->validated(),
-            'owner_id' => Auth::user()->isAdmin() ? null : Auth::id(),
-        ]);
+        $data = $request->validated();
+        if (! Auth::user()->isAdmin()) {
+            $data['status'] = 'pending';
+            $data['owner_id'] = Auth::id();
+        } else {
+            $data['status'] = $data['status'] ?? 'approved';
+            $data['owner_id'] = null;
+        }
+
+        Venue::create($data);
 
         return to_route('venues.index')->with('success', 'Venue created.');
     }
@@ -46,7 +52,12 @@ class VenueController extends Controller
     {
         $this->authorizeVenue($venue);
 
-        $venue->update($request->validated());
+        $data = $request->validated();
+        if (! Auth::user()->isAdmin()) {
+            unset($data['status'], $data['owner_id']);
+        }
+
+        $venue->update($data);
 
         return to_route('venues.index')->with('success', 'Venue updated.');
     }
@@ -54,6 +65,14 @@ class VenueController extends Controller
     public function destroy(Venue $venue): RedirectResponse
     {
         $this->authorizeVenue($venue);
+
+        $hasActiveBookings = $venue->courts()
+            ->whereHas('bookings', fn ($q) => $q
+                ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+                ->whereDate('booking_date', '>=', today()))
+            ->exists();
+
+        abort_if($hasActiveBookings, 422, 'Venue tidak dapat dihapus karena masih memiliki jadwal booking aktif.');
 
         $venue->delete();
 

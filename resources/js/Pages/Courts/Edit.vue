@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import Button from '@/Components/ui/Button.vue';
-import Card from '@/Components/ui/Card.vue';
-import CardContent from '@/Components/ui/CardContent.vue';
-import Input from '@/Components/ui/Input.vue';
-import Label from '@/Components/ui/Label.vue';
+import { ArrowLeft, CheckCircle2, Layers } from '@lucide/vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const props = defineProps<{ court: { id: number; venue_id: number; name: string; price_per_hour: string; status: string }; venues: Array<{ id: number; name: string }> }>();
@@ -14,56 +10,93 @@ const submit = () => form.put(route('courts.update', props.court.id));
 </script>
 
 <template>
-    <Head title="Edit lapangan" />
-    <AuthenticatedLayout>
-        <template #header><h2 class="text-2xl font-bold tracking-tight text-foreground">Edit lapangan</h2></template>
-        <div class="py-10">
+    <Head title="Edit Lapangan — PadelHub" />
+    <AuthenticatedLayout :dark="true">
+        <template #header>
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-400">
+                        <Layers class="h-3.5 w-3.5" />
+                        <span>FASILITAS LAPANGAN</span>
+                    </div>
+                    <h2 class="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">Edit Lapangan Padel</h2>
+                    <p class="mt-1 text-sm text-slate-400">Perbarui informasi nama, tarif sewa, dan status operasional lapangan.</p>
+                </div>
+                <Link
+                    :href="route('courts.index')"
+                    class="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-xs font-semibold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                >
+                    <ArrowLeft class="h-4 w-4" />
+                    <span>Kembali ke Daftar</span>
+                </Link>
+            </div>
+        </template>
+
+        <div class="py-8">
             <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-                <Card>
-                    <CardContent class="p-8">
-                        <form class="space-y-5" @submit.prevent="submit">
-                            <div>
-                                <Label for="venue_id">Venue *</Label>
-                                <select
-                                    id="venue_id"
-                                    v-model="form.venue_id"
-                                    class="mt-1 flex h-10 w-full rounded-lg border border-input bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                >
-                                    <option v-for="venue in venues" :key="venue.id" :value="venue.id">{{ venue.name }}</option>
-                                </select>
-                                <p v-if="err('venue_id')" class="mt-1 text-sm text-destructive">{{ err('venue_id') }}</p>
-                            </div>
-                            <div>
-                                <Label for="name">Nama lapangan *</Label>
-                                <Input id="name" v-model="form.name" />
-                                <p v-if="err('name')" class="mt-1 text-sm text-destructive">{{ err('name') }}</p>
-                            </div>
-                            <div>
-                                <Label for="price">Tarif per jam (Rp) *</Label>
-                                <Input id="price" v-model="form.price_per_hour" type="number" min="0" step="1000" />
-                                <p v-if="err('price_per_hour')" class="mt-1 text-sm text-destructive">{{ err('price_per_hour') }}</p>
-                            </div>
-                            <div>
-                                <Label for="status">Status</Label>
-                                <select
-                                    id="status"
-                                    v-model="form.status"
-                                    class="mt-1 flex h-10 w-full rounded-lg border border-input bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                >
-                                    <option value="available">Available</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center gap-4 border-t border-border pt-6">
-                                <Button variant="accent" type="submit" :disabled="form.processing">
-                                    {{ form.processing ? 'Menyimpan…' : 'Simpan perubahan' }}
-                                </Button>
-                                <Link :href="route('courts.index')" class="text-sm font-medium text-muted-foreground transition hover:text-foreground">Batal</Link>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                <div class="rounded-3xl border border-slate-800/80 bg-slate-900/60 p-6 shadow-2xl backdrop-blur-md sm:p-8">
+                    <form class="space-y-6" @submit.prevent="submit">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Venue *</label>
+                            <select
+                                id="venue_id"
+                                v-model="form.venue_id"
+                                class="mt-2 flex h-11 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 text-xs font-semibold text-white shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 [&>option]:bg-slate-900 [&>option]:text-white"
+                            >
+                                <option v-for="venue in venues" :key="venue.id" :value="venue.id">{{ venue.name }}</option>
+                            </select>
+                            <p v-if="err('venue_id')" class="mt-1.5 text-xs font-semibold text-rose-400">{{ err('venue_id') }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Nama Lapangan *</label>
+                            <input
+                                id="name"
+                                v-model="form.name"
+                                class="mt-2 flex h-11 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 text-xs font-semibold text-white shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            />
+                            <p v-if="err('name')" class="mt-1.5 text-xs font-semibold text-rose-400">{{ err('name') }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Tarif Sewa per Jam (Rp) *</label>
+                            <input
+                                id="price"
+                                v-model="form.price_per_hour"
+                                type="number"
+                                min="0"
+                                step="1000"
+                                class="mt-2 flex h-11 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 text-xs font-semibold text-white shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                            />
+                            <p v-if="err('price_per_hour')" class="mt-1.5 text-xs font-semibold text-rose-400">{{ err('price_per_hour') }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Status Operasional</label>
+                            <select
+                                id="status"
+                                v-model="form.status"
+                                class="mt-2 flex h-11 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 text-xs font-semibold text-white shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 [&>option]:bg-slate-900 [&>option]:text-white"
+                            >
+                                <option value="available">Tersedia (Available)</option>
+                                <option value="maintenance">Perawatan (Maintenance)</option>
+                                <option value="inactive">Nonaktif (Inactive)</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center gap-4 border-t border-slate-800/80 pt-6">
+                            <button
+                                type="submit"
+                                :disabled="form.processing"
+                                class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-bold text-slate-950 shadow-md shadow-emerald-500/20 transition hover:scale-105 disabled:opacity-50"
+                            >
+                                <CheckCircle2 class="h-4 w-4" />
+                                <span>{{ form.processing ? 'Menyimpan…' : 'Simpan Perubahan' }}</span>
+                            </button>
+                            <Link :href="route('courts.index')" class="text-xs font-semibold text-slate-400 transition hover:text-white">Batal</Link>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>

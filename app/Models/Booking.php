@@ -11,7 +11,7 @@ class Booking extends Model
     protected $fillable = [
         'user_id', 'court_id', 'booking_date', 'start_time', 'end_time',
         'status', 'payment_status', 'total_amount', 'locked_until',
-        'recurrence_rule', 'recurring_group_id',
+        'recurrence_rule', 'recurring_group_id', 'promo_id', 'discount_amount',
     ];
 
     protected function casts(): array
@@ -19,6 +19,7 @@ class Booking extends Model
         return [
             'booking_date' => 'date',
             'total_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'locked_until' => 'datetime',
         ];
     }
@@ -38,8 +39,18 @@ class Booking extends Model
         return $this->belongsTo(Court::class);
     }
 
+    public function promo(): BelongsTo
+    {
+        return $this->belongsTo(Promo::class);
+    }
+
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class);
+    }
+
+    public function isLockExpired(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until->isPast();
     }
 }

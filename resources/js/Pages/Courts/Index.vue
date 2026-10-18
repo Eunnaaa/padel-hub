@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Badge from '@/Components/ui/Badge.vue';
-import Button from '@/Components/ui/Button.vue';
-import Card from '@/Components/ui/Card.vue';
-import CardContent from '@/Components/ui/CardContent.vue';
 import ConfirmDialog from '@/Components/ui/ConfirmDialog.vue';
-import Input from '@/Components/ui/Input.vue';
-import { Pencil, Plus, Ruler, Search, Trash2 } from '@lucide/vue';
+import { Layers, Pencil, Plus, Search, Trash2, Wrench } from '@lucide/vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
@@ -37,68 +33,87 @@ const confirmDelete = () => {
 </script>
 
 <template>
-    <Head title="Courts" />
-    <AuthenticatedLayout>
+    <Head title="Manajemen Lapangan — PadelHub" />
+    <AuthenticatedLayout :dark="true">
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="text-2xl font-bold tracking-tight text-foreground">Courts</h2>
-                    <p class="mt-1 text-sm text-muted-foreground">Kelola lapangan dan tarif per jam.</p>
+                    <div class="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-bold text-emerald-400">
+                        <Layers class="h-3.5 w-3.5" />
+                        <span>FASILITAS LAPANGAN</span>
+                    </div>
+                    <h2 class="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">Daftar Lapangan Padel</h2>
+                    <p class="mt-1 text-sm text-slate-400">Kelola ketersediaan, status operasional, dan tarif sewa per jam.</p>
                 </div>
-                <Button as="link" :href="route('courts.create')" variant="accent">
+                <Link
+                    :href="route('courts.create')"
+                    class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-4 py-2.5 text-xs font-bold text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:scale-105"
+                >
                     <Plus class="h-4 w-4" />
-                    Tambah lapangan
-                </Button>
+                    <span>Tambah Lapangan Baru</span>
+                </Link>
             </div>
         </template>
 
-        <div class="py-10">
+        <div class="py-8">
             <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+                <!-- Search Bar -->
                 <div class="relative max-w-md">
-                    <Search class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input v-model="search" type="search" placeholder="Cari lapangan atau venue…" class="pl-10" />
+                    <Search class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                        v-model="search"
+                        type="search"
+                        placeholder="Cari lapangan atau venue…"
+                        class="h-10 w-full rounded-xl border border-slate-800 bg-slate-950/80 pl-9 pr-3 text-xs text-white placeholder-slate-400 shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
                 </div>
 
                 <div v-if="filtered.length" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    <Card v-for="c in filtered" :key="c.id" class="transition hover:-translate-y-0.5 hover:shadow-md">
-                        <CardContent class="p-6">
-                            <div class="flex items-start justify-between">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                                    <Ruler class="h-6 w-6" />
-                                </div>
-                                <Badge :variant="statusVariant(c.status)">{{ c.status }}</Badge>
+                    <div
+                        v-for="c in filtered"
+                        :key="c.id"
+                        class="group relative overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md transition-all hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-emerald-950/20"
+                    >
+                        <div class="flex items-start justify-between">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 ring-1 ring-emerald-500/30">
+                                <Layers class="h-6 w-6" />
                             </div>
+                            <Badge :variant="statusVariant(c.status)">{{ c.status }}</Badge>
+                        </div>
 
-                            <h3 class="mt-4 text-lg font-bold text-foreground">{{ c.name }}</h3>
-                            <p class="mt-1 text-sm text-muted-foreground">{{ c.venue.name }}</p>
+                        <h3 class="mt-4 text-lg font-black text-white">{{ c.name }}</h3>
+                        <p class="mt-1 text-xs text-slate-400">{{ c.venue.name }}</p>
 
-                            <div class="mt-5 flex items-end justify-between border-t border-border pt-4">
-                                <div>
-                                    <p class="text-xs text-muted-foreground">Tarif / jam</p>
-                                    <p class="text-xl font-extrabold text-accent">Rp {{ fmt(c.price_per_hour) }}</p>
-                                </div>
+                        <div class="mt-5 flex items-end justify-between border-t border-slate-800/80 pt-4">
+                            <div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tarif Sewa</span>
+                                <p class="text-lg font-black text-emerald-400">Rp {{ fmt(c.price_per_hour) }}<span class="text-xs font-normal text-slate-400">/jam</span></p>
                             </div>
+                        </div>
 
-                            <div class="mt-4 flex gap-2">
-                                <Button as="link" :href="route('courts.edit', c.id)" variant="outline" size="sm" class="flex-1">
-                                    <Pencil class="h-3.5 w-3.5" />
-                                    Edit
-                                </Button>
-                                <Button variant="outline" size="sm" class="flex-1 border-destructive/30 text-destructive hover:bg-destructive/5" @click="askDelete(c)">
-                                    <Trash2 class="h-3.5 w-3.5" />
-                                    Hapus
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                        <div class="mt-4 flex gap-2">
+                            <Link
+                                :href="route('courts.edit', c.id)"
+                                class="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-center text-xs font-semibold text-slate-200 transition hover:bg-slate-700 hover:text-white"
+                            >
+                                Edit
+                            </Link>
+                            <button
+                                type="button"
+                                class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/20 hover:text-white"
+                                @click="askDelete(c)"
+                            >
+                                <Trash2 class="h-3.5 w-3.5" />
+                                <span>Hapus</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <Card v-else class="border-dashed">
-                    <CardContent class="flex flex-col items-center py-16 text-center">
-                        <p class="font-semibold text-foreground">Tidak ada lapangan ditemukan</p>
-                        <p class="mt-1 text-sm text-muted-foreground">Coba kata kunci lain atau tambah lapangan baru.</p>
-                    </CardContent>
-                </Card>
+                <div v-else class="rounded-3xl border border-dashed border-slate-800 bg-slate-900/40 py-16 text-center">
+                    <p class="font-bold text-white">Tidak ada lapangan ditemukan</p>
+                    <p class="mt-1 text-xs text-slate-400">Coba gunakan kata kunci lain atau tambahkan lapangan baru.</p>
+                </div>
             </div>
         </div>
 

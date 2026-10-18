@@ -14,7 +14,7 @@ class VenueRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('venues')->ignore($this->venue)],
             'description' => ['nullable', 'string'],
@@ -22,7 +22,12 @@ class VenueRequest extends FormRequest
             'city' => ['required', 'string', 'max:100'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'status' => ['required', Rule::in(['pending', 'approved', 'rejected'])],
         ];
+
+        if ($this->user()?->isAdmin()) {
+            $rules['status'] = ['sometimes', Rule::in(['pending', 'approved', 'rejected'])];
+        }
+
+        return $rules;
     }
 }

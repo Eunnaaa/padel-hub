@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\Venue;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -57,12 +58,32 @@ class PublicVenueController extends Controller
         ]);
     }
 
-    public function show(Venue $venue): Response
+    public function show(Request $request, Venue $venue): Response
     {
         abort_unless($venue->status === 'approved', 404);
 
+        $date = $request->query('date', today()->toDateString());
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $date)) {
+            $date = today()->toDateString();
+        }
+
+        $venue->load([
+            'courts' => fn ($q) => $q->where('status', '!=', 'inactive')->orderBy('name'),
+            'courts.venue:id,name,city,slug,rating',
+        ]);
+
+        $courtIds = $venue->courts->pluck('id');
+        $bookings = Booking::whereIn('court_id', $courtIds)
+            ->where('booking_date', $date)
+            ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+            ->liveLock()
+            ->get(['court_id', 'start_time', 'end_time', 'status']);
+
         return Inertia::render('Venues/Show', [
-            'venue' => $venue->load(['courts' => fn ($q) => $q->where('status', '!=', 'inactive')->orderBy('name')]),
+            'venue' => $venue,
+            'bookings' => $bookings,
+            'selectedDate' => $date,
+            'todayDate' => today()->toDateString(),
         ]);
     }
 }

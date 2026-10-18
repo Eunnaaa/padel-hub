@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
+use App\Models\Court;
 use App\Models\User;
 use App\Models\Venue;
 use Illuminate\Http\RedirectResponse;
@@ -16,14 +17,29 @@ class AdminController extends Controller
         $stats = [
             'users' => User::count(),
             'pending_venues' => Venue::where('status', 'pending')->count(),
+            'approved_venues' => Venue::where('status', 'approved')->count(),
+            'total_courts' => Court::count(),
+            'available_courts' => Court::where('status', 'available')->count(),
+            'maintenance_courts' => Court::where('status', 'maintenance')->count(),
             'bookings' => Booking::count(),
             'revenue' => Booking::whereNotIn('status', ['cancelled', 'expired'])
                 ->where('payment_status', 'paid')
                 ->sum('total_amount'),
+            'today_bookings' => Booking::whereDate('booking_date', today())->count(),
         ];
+
+        $courts = Court::with(['venue:id,name,city,slug'])
+            ->withCount(['bookings as today_bookings_count' => function ($q) {
+                $q->whereDate('booking_date', today())
+                    ->whereIn('status', ['confirmed', 'checked_in', 'pending']);
+            }])
+            ->orderBy('venue_id')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('Admin/Dashboard', [
             'stats' => $stats,
+            'courts' => $courts,
             'users' => User::orderBy('name')->get(['id', 'name', 'email', 'role', 'is_active', 'created_at']),
             'pendingVenues' => Venue::where('status', 'pending')->latest()->get(),
             'recentBookings' => Booking::with(['court.venue', 'user'])
@@ -31,6 +47,14 @@ class AdminController extends Controller
                 ->limit(10)
                 ->get(),
         ]);
+    }
+
+    public function toggleCourtStatus(Court $court): RedirectResponse
+    {
+        $newStatus = $court->status === 'available' ? 'maintenance' : 'available';
+        $court->update(['status' => $newStatus]);
+
+        return back()->with('success', "Status lapangan {$court->name} ({$court->venue->name}) berhasil diubah menjadi {$newStatus}.");
     }
 
     public function approveVenue(Venue $venue): RedirectResponse

@@ -8,4 +8,7 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('bookings:expire-locks')->everyMinute();
+Schedule::command('bookings:expire-locks')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();

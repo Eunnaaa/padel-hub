@@ -42,12 +42,12 @@ const submit = () => {
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Profile Information
+            <h2 class="text-base font-black uppercase tracking-tight text-white">
+                Informasi Profil
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Update your account's profile information and email address.
+            <p class="mt-1 text-xs text-slate-400">
+                Perbarui data profil, kontak WhatsApp, dan level permainan padel kamu.
             </p>
         </header>
 
@@ -56,17 +56,18 @@ const submit = () => {
             class="mt-6 space-y-6"
         >
             <div class="flex items-center gap-5">
-                <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200">
+                <div class="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 ring-2 ring-emerald-500/40">
                     <img v-if="hasAvatar" :src="avatarPreview ?? undefined" alt="Avatar" class="h-full w-full object-cover" />
-                    <span v-else class="text-2xl font-bold text-gray-400">{{ user.name.charAt(0).toUpperCase() }}</span>
+                    <span v-else class="text-2xl font-black text-emerald-400">{{ user.name.charAt(0).toUpperCase() }}</span>
+                    <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-slate-900 bg-emerald-400" />
                 </div>
                 <div>
-                    <InputLabel for="avatar" value="Avatar" />
+                    <InputLabel for="avatar" value="Foto Profil / Avatar" />
                     <input
                         id="avatar"
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
-                        class="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-dark"
+                        class="mt-1.5 block w-full text-xs text-slate-400 file:mr-3 file:rounded-xl file:border file:border-slate-700 file:bg-slate-800 file:px-3.5 file:py-2 file:text-xs file:font-bold file:text-emerald-400 hover:file:bg-slate-700"
                         @change="onAvatar"
                     />
                     <InputError class="mt-2" :message="form.errors.avatar" />
@@ -74,12 +75,12 @@ const submit = () => {
             </div>
 
             <div>
-                <InputLabel for="name" value="Name" />
+                <InputLabel for="name" value="Nama Lengkap *" />
 
                 <TextInput
                     id="name"
                     type="text"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full"
                     v-model="form.name"
                     required
                     autofocus
@@ -90,12 +91,12 @@ const submit = () => {
             </div>
 
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="Alamat Email *" />
 
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full"
                     v-model="form.email"
                     required
                     autocomplete="username"
@@ -105,13 +106,14 @@ const submit = () => {
             </div>
 
             <div>
-                <InputLabel for="phone" value="Phone" />
+                <InputLabel for="phone" value="Nomor WhatsApp" />
 
                 <TextInput
                     id="phone"
                     type="tel"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full"
                     v-model="form.phone"
+                    placeholder="08123456789"
                     autocomplete="tel"
                 />
 
@@ -120,12 +122,12 @@ const submit = () => {
 
             <div class="grid gap-6 sm:grid-cols-2">
                 <div>
-                    <InputLabel for="gender" value="Gender" />
+                    <InputLabel for="gender" value="Jenis Kelamin" />
 
                     <select
                         id="gender"
                         v-model="form.gender"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-accent focus:ring-brand-accent"
+                        class="mt-1.5 block h-11 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 text-xs font-semibold text-white shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 [&>option]:bg-slate-900 [&>option]:text-white"
                     >
                         <option value="">— Pilih —</option>
                         <option value="male">Laki-laki</option>
@@ -136,12 +138,12 @@ const submit = () => {
                 </div>
 
                 <div>
-                    <InputLabel for="birth_date" value="Birth Date" />
+                    <InputLabel for="birth_date" value="Tanggal Lahir" />
 
                     <TextInput
                         id="birth_date"
                         type="date"
-                        class="mt-1 block w-full"
+                        class="mt-1.5 block w-full"
                         v-model="form.birth_date"
                         :max="new Date().toISOString().slice(0, 10)"
                     />
@@ -151,46 +153,52 @@ const submit = () => {
             </div>
 
             <div>
-                <InputLabel for="skill_level" value="Skill Level" />
+                <InputLabel for="skill_level" value="Skill Level Padel" />
 
                 <select
                     id="skill_level"
                     v-model="form.skill_level"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-accent focus:ring-brand-accent"
+                    class="mt-1.5 block h-11 w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3 text-xs font-semibold text-white shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 [&>option]:bg-slate-900 [&>option]:text-white"
                 >
                     <option value="">— Pilih —</option>
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                    <option value="pro">Pro</option>
+                    <option value="beginner">Beginner (Pemula)</option>
+                    <option value="intermediate">Intermediate (Menengah)</option>
+                    <option value="advanced">Advanced (Mahir)</option>
+                    <option value="pro">Pro (Atlet / Kompetitif)</option>
                 </select>
 
                 <InputError class="mt-2" :message="form.errors.skill_level" />
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
-                <p class="mt-2 text-sm text-gray-800">
-                    Your email address is unverified.
+                <p class="mt-2 text-xs text-amber-400">
+                    Email kamu belum diverifikasi.
                     <Link
                         :href="route('verification.send')"
                         method="post"
                         as="button"
-                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
+                        class="underline hover:text-white"
                     >
-                        Click here to re-send the verification email.
+                        Klik di sini untuk mengirim ulang link verifikasi.
                     </Link>
                 </p>
 
                 <div
                     v-show="status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600"
+                    class="mt-2 text-xs font-bold text-emerald-400"
                 >
-                    A new verification link has been sent to your email address.
+                    Link verifikasi baru telah dikirimkan ke email kamu.
                 </div>
             </div>
 
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+            <div class="flex items-center gap-4 pt-2">
+                <button
+                    type="submit"
+                    :disabled="form.processing"
+                    class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-bold text-slate-950 shadow-md shadow-emerald-500/20 transition hover:scale-105 disabled:opacity-50"
+                >
+                    {{ form.processing ? 'Menyimpan…' : 'Simpan Profil' }}
+                </button>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -200,9 +208,9 @@ const submit = () => {
                 >
                     <p
                         v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600"
+                        class="text-xs font-bold text-emerald-400"
                     >
-                        Saved.
+                        Tersimpan.
                     </p>
                 </Transition>
             </div>

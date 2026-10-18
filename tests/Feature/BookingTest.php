@@ -100,25 +100,28 @@ test('booking pending dengan lock kedaluwarsa tidak memblokir slot', function ()
         'locked_until' => now()->subMinute(),
     ]);
 
-    $this->actingAs($user)->post('/bookings', [
+    $res = $this->actingAs($user)->post('/bookings', [
         'court_id' => $this->court->id,
         'booking_date' => now()->addWeek()->toDateString(),
         'start_time' => '09:30',
         'end_time' => '10:30',
-    ])->assertSessionHasNoErrors()->assertRedirect('/bookings');
+    ]);
+    $created = Booking::where('user_id', $user->id)->latest('id')->first();
+    $res->assertSessionHasNoErrors()->assertRedirect("/bookings/{$created->id}/pay");
 });
 
 test('booking baru mendapat lock 5 menit', function () {
     $user = User::factory()->create(['role' => 'player']);
 
-    $this->actingAs($user)->post('/bookings', [
+    $res = $this->actingAs($user)->post('/bookings', [
         'court_id' => $this->court->id,
         'booking_date' => now()->addWeek()->toDateString(),
         'start_time' => '09:00',
         'end_time' => '10:00',
-    ])->assertRedirect('/bookings');
+    ]);
 
     $booking = Booking::where('user_id', $user->id)->first();
+    $res->assertRedirect("/bookings/{$booking->id}/pay");
     expect($booking->status)->toBe('pending');
     expect($booking->locked_until)->not->toBeNull();
     expect($booking->locked_until->isFuture())->toBeTrue();
@@ -181,4 +184,162 @@ test('cancel seri membatalkan semua booking dalam grup', function () {
         ->assertRedirect('/bookings');
 
     expect(Booking::where('user_id', $user->id)->whereNotIn('status', ['cancelled'])->count())->toBe(0);
+});
+
+test('booking lapangan maintenance atau inaktif ditolak', function () {
+    $user = User::factory()->create(['role' => 'player']);
+    $this->court->update(['status' => 'maintenance']);
+
+    $this->actingAs($user)->post('/bookings', [
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '10:00',
+    ])->assertStatus(422);
+});
+
+test('booking pada venue yang belum diapprove ditolak', function () {
+    $user = User::factory()->create(['role' => 'player']);
+    $this->court->venue->update(['status' => 'pending']);
+
+    $this->actingAs($user)->post('/bookings', [
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '10:00',
+    ])->assertStatus(422);
+});
+
+test('update booking tidak bisa memanipulasi payment_status', function () {
+    $user = User::factory()->create(['role' => 'player']);
+    $booking = Booking::create([
+        'user_id' => $user->id,
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '10:00',
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'total_amount' => 100000,
+    ]);
+
+    $this->actingAs($user)->put("/bookings/{$booking->id}", [
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '14:00',
+        'end_time' => '15:00',
+        'payment_status' => 'paid',
+        'status' => 'confirmed',
+    ])->assertRedirect('/bookings');
+
+    $booking->refresh();
+    expect($booking->payment_status)->toBe('pending');
+    expect($booking->status)->toBe('pending');
+    expect(substr($booking->start_time, 0, 5))->toBe('14:00');
+});
+
+test('booking yang sudah dibayar tidak bisa diupdate jadwalnya sembarangan', function () {
+    $user = User::factory()->create(['role' => 'player']);
+    $booking = Booking::create([
+        'user_id' => $user->id,
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '10:00',
+        'status' => 'confirmed',
+        'payment_status' => 'paid',
+        'total_amount' => 100000,
+    ]);
+
+    $this->actingAs($user)->put("/bookings/{$booking->id}", [
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '14:00',
+        'end_time' => '15:00',
+    ])->assertStatus(422);
+});
+
+test('booking yang sudah dibayar atau check in tidak bisa dibatalkan langsung oleh user', function () {
+    $user = User::factory()->create(['role' => 'player']);
+    $booking = Booking::create([
+        'user_id' => $user->id,
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '10:00',
+        'status' => 'confirmed',
+        'payment_status' => 'paid',
+        'total_amount' => 100000,
+    ]);
+
+    $this->actingAs($user)->delete("/bookings/{$booking->id}")
+        ->assertStatus(422);
+
+    expect($booking->fresh()->status)->toBe('confirmed');
+
+    $booking->update(['status' => 'checked_in']);
+    $this->actingAs($user)->delete("/bookings/{$booking->id}")
+        ->assertStatus(422);
+
+    expect($booking->fresh()->status)->toBe('checked_in');
+});
+
+test('booking dengan durasi kurang dari 1 jam ditolak', function () {
+    $user = User::factory()->create(['role' => 'player']);
+
+    $this->actingAs($user)->post('/bookings', [
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '09:30',
+    ])->assertSessionHasErrors('end_time');
+});
+
+test('booking dengan durasi lebih dari 4 jam ditolak', function () {
+    $user = User::factory()->create(['role' => 'player']);
+
+    $this->actingAs($user)->post('/bookings', [
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '13:30',
+    ])->assertSessionHasErrors('end_time');
+});
+
+test('booking dengan interval selain kelipatan 30 menit ditolak', function () {
+    $user = User::factory()->create(['role' => 'player']);
+
+    $this->actingAs($user)->post('/bookings', [
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:15',
+        'end_time' => '10:15',
+    ])->assertSessionHasErrors('start_time');
+});
+
+test('edit dan update booking pending yang lock-nya kedaluwarsa ditolak 422', function () {
+    $user = User::factory()->create(['role' => 'player']);
+    $booking = Booking::create([
+        'user_id' => $user->id,
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '09:00',
+        'end_time' => '10:00',
+        'status' => 'pending',
+        'payment_status' => 'pending',
+        'total_amount' => 100000,
+        'locked_until' => now()->subMinute(),
+    ]);
+
+    $this->actingAs($user)->get("/bookings/{$booking->id}/edit")
+        ->assertStatus(422);
+
+    $this->actingAs($user)->put("/bookings/{$booking->id}", [
+        'court_id' => $this->court->id,
+        'booking_date' => now()->addWeek()->toDateString(),
+        'start_time' => '10:00',
+        'end_time' => '11:00',
+    ])->assertStatus(422);
+
+    expect($booking->fresh()->status)->toBe('expired');
 });

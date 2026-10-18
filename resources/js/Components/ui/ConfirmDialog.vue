@@ -25,9 +25,9 @@ const emit = defineEmits<{ 'update:open': [value: boolean]; confirm: [] }>();
 <template>
     <AlertDialogRoot :open="open" @update:open="emit('update:open', $event)">
         <AlertDialogPortal>
-            <AlertDialogOverlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+            <AlertDialogOverlay class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md" />
             <AlertDialogContent
-                class="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-card p-6 shadow-lg"
+                class="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-slate-800/80 bg-slate-900 p-6 shadow-2xl backdrop-blur-xl sm:p-7"
             >
                 <AlertDialogTitle class="text-lg font-bold text-foreground">{{ title }}</AlertDialogTitle>
                 <AlertDialogDescription v-if="description" class="mt-2 text-sm text-muted-foreground">

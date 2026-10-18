@@ -6,6 +6,7 @@ use App\Models\Booking;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -42,11 +43,17 @@ class VenueDashboardController extends Controller
         $maxRevenue = $trendDays->max('revenue') ?: 1;
         $maxBookings = $trendDays->max('bookings') ?: 1;
 
+        $hourExpr = match (DB::connection()->getDriverName()) {
+            'sqlite' => "strftime('%H:00', start_time)",
+            'mysql', 'mariadb' => "DATE_FORMAT(start_time, '%H:00')",
+            default => "to_char(start_time, 'HH24:00')",
+        };
+
         // ponytail: peak hours + court usage scoped to 30 days — widen when analytics filter exists
         $peakHours = $scope(Booking::query())
             ->where('booking_date', '>=', today()->subDays(30))
             ->whereNotIn('status', ['cancelled', 'expired'])
-            ->selectRaw("to_char(start_time, 'HH24:00') as hour, count(*) as total")
+            ->selectRaw("{$hourExpr} as hour, count(*) as total")
             ->groupBy('hour')
             ->orderByDesc('total')
             ->limit(6)
@@ -60,7 +67,17 @@ class VenueDashboardController extends Controller
             ->groupBy('court_id')
             ->orderByDesc('total')
             ->get()
-            ->map(fn ($row) => ['court' => $row->court->name, 'total' => $row->total]);
+            ->map(fn ($row) => ['court' => $row->court?->name ?? 'Lapangan', 'total' => $row->total]);
+
+        $venues = (Auth::user()->isAdmin() ? Venue::query() : Auth::user()->venues())
+            ->withCount('courts')
+            ->get();
+
+        $recentBookings = $scope(Booking::query())
+            ->with(['court.venue', 'user'])
+            ->latest('id')
+            ->limit(5)
+            ->get();
 
         return Inertia::render('VenueDashboard/Index', [
             'revenue' => ['today' => $revenueToday, 'week' => $revenueWeek, 'month' => $revenueMonth],
@@ -70,6 +87,8 @@ class VenueDashboardController extends Controller
             'maxBookings' => $maxBookings,
             'peakHours' => $peakHours,
             'courtUsage' => $courtUsage,
+            'venues' => $venues,
+            'recentBookings' => $recentBookings,
         ]);
     }
 }

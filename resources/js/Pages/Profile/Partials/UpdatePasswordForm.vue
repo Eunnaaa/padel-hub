@@ -38,26 +38,25 @@ const updatePassword = () => {
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Update Password
+            <h2 class="text-base font-black uppercase tracking-tight text-white">
+                Perbarui Kata Sandi
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Ensure your account is using a long, random password to stay
-                secure.
+            <p class="mt-1 text-xs text-slate-400">
+                Pastikan akun kamu menggunakan kata sandi yang aman dan tidak mudah ditebak.
             </p>
         </header>
 
         <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
             <div>
-                <InputLabel for="current_password" value="Current Password" />
+                <InputLabel for="current_password" value="Kata Sandi Saat Ini *" />
 
                 <TextInput
                     id="current_password"
                     ref="currentPasswordInput"
                     v-model="form.current_password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full"
                     autocomplete="current-password"
                 />
 
@@ -68,14 +67,14 @@ const updatePassword = () => {
             </div>
 
             <div>
-                <InputLabel for="password" value="New Password" />
+                <InputLabel for="password" value="Kata Sandi Baru *" />
 
                 <TextInput
                     id="password"
                     ref="passwordInput"
                     v-model="form.password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full"
                     autocomplete="new-password"
                 />
 
@@ -85,14 +84,14 @@ const updatePassword = () => {
             <div>
                 <InputLabel
                     for="password_confirmation"
-                    value="Confirm Password"
+                    value="Konfirmasi Kata Sandi Baru *"
                 />
 
                 <TextInput
                     id="password_confirmation"
                     v-model="form.password_confirmation"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full"
                     autocomplete="new-password"
                 />
 
@@ -102,8 +101,14 @@ const updatePassword = () => {
                 />
             </div>
 
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+            <div class="flex items-center gap-4 pt-2">
+                <button
+                    type="submit"
+                    :disabled="form.processing"
+                    class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-2.5 text-xs font-bold text-slate-950 shadow-md shadow-emerald-500/20 transition hover:scale-105 disabled:opacity-50"
+                >
+                    {{ form.processing ? 'Menyimpan…' : 'Perbarui Kata Sandi' }}
+                </button>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -113,9 +118,9 @@ const updatePassword = () => {
                 >
                     <p
                         v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600"
+                        class="text-xs font-bold text-emerald-400"
                     >
-                        Saved.
+                        Kata sandi berhasil diperbarui.
                     </p>
                 </Transition>
             </div>

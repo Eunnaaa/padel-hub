@@ -66,6 +66,13 @@ class CourtController extends Controller
     {
         $this->authorizeCourt($court);
 
+        $hasActiveBookings = $court->bookings()
+            ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+            ->whereDate('booking_date', '>=', today())
+            ->exists();
+
+        abort_if($hasActiveBookings, 422, 'Lapangan tidak dapat dihapus karena memiliki jadwal booking aktif. Silakan ubah status lapangan menjadi nonaktif.');
+
         $court->delete();
 
         return to_route('courts.index')->with('success', 'Court deleted.');
