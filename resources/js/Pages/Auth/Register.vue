@@ -9,8 +9,10 @@ import {
     Lock,
     Mail,
     Phone,
+    QrCode,
     ShieldCheck,
     Sparkles,
+    Tag,
     User,
     UserPlus,
 } from '@lucide/vue';
@@ -54,9 +56,13 @@ const submit = () => {
                 <Sparkles class="h-3.5 w-3.5" /> Booking Instan
             </span>
             <span class="text-slate-600">•</span>
-            <span>🎟️ QR Match Pass</span>
+            <span class="flex items-center gap-1 text-slate-300">
+                <QrCode class="h-3.5 w-3.5 text-emerald-400" /> QR Match Pass
+            </span>
             <span class="text-slate-600">•</span>
-            <span>🏷️ Diskon Promo</span>
+            <span class="flex items-center gap-1 text-slate-300">
+                <Tag class="h-3.5 w-3.5 text-emerald-400" /> Diskon Promo
+            </span>
         </div>
 
         <form @submit.prevent="submit" class="space-y-3.5">

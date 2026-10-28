@@ -67,23 +67,23 @@ const navGroups = computed<NavGroup[]>(() => {
                 title: 'Overview & Sistem',
                 items: [
                     { label: 'Dashboard Admin', route: 'admin.dashboard', pattern: 'admin.*', icon: Shield },
-                    { label: 'Analytics Venue', route: 'venue-dashboard.index', pattern: 'venue-dashboard.*', icon: TrendingUp },
+                    { label: 'Analytics Platform', route: 'venue-dashboard.index', pattern: 'venue-dashboard.*', icon: TrendingUp },
                 ],
             },
             {
-                title: 'Manajemen Fasilitas',
+                title: 'Manajemen Fasilitas & Operasi',
                 items: [
                     { label: 'Manajemen Venue', route: 'venues.index', pattern: 'venues.*', icon: Building2 },
                     { label: 'Manajemen Lapangan', route: 'courts.index', pattern: 'courts.*', icon: Layers },
                     { label: 'Monitoring Slot', route: 'availability.index', pattern: 'availability.*', icon: Clock, badge: 'Live', badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' },
+                    { label: 'Check-in Pemain', route: 'checkin.index', pattern: 'checkin.*', icon: QrCode, badge: 'QR', badgeColor: 'bg-sky-500/20 text-sky-400 border border-sky-500/30' },
                 ],
             },
             {
-                title: 'Operasional & Transaksi',
+                title: 'Reservasi Pribadi',
                 items: [
-                    { label: 'Check-in Pemain', route: 'checkin.index', pattern: 'checkin.*', icon: QrCode, badge: 'QR', badgeColor: 'bg-sky-500/20 text-sky-400 border border-sky-500/30' },
-                    { label: 'Monitoring Booking', route: 'bookings.index', pattern: 'bookings.*', icon: CalendarCheck },
-                    { label: 'Laporan Pembayaran', route: 'payments.index', pattern: 'payments.*', icon: CreditCard },
+                    { label: 'Booking Saya', route: 'bookings.index', pattern: 'bookings.*', icon: CalendarCheck },
+                    { label: 'Riwayat Bayar', route: 'payments.index', pattern: 'payments.*', icon: CreditCard },
                 ],
             },
         ];
@@ -98,19 +98,19 @@ const navGroups = computed<NavGroup[]>(() => {
                 ],
             },
             {
-                title: 'Fasilitas & Lapangan',
+                title: 'Fasilitas & Operasional',
                 items: [
                     { label: 'Venue Saya', route: 'venues.index', pattern: 'venues.*', icon: Building2 },
                     { label: 'Lapangan Saya', route: 'courts.index', pattern: 'courts.*', icon: Layers },
                     { label: 'Monitoring Slot', route: 'availability.index', pattern: 'availability.*', icon: Clock, badge: 'Live', badgeColor: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' },
+                    { label: 'Check-in Pemain', route: 'checkin.index', pattern: 'checkin.*', icon: QrCode, badge: 'QR', badgeColor: 'bg-sky-500/20 text-sky-400 border border-sky-500/30' },
                 ],
             },
             {
-                title: 'Operasional Pemain',
+                title: 'Reservasi Pribadi',
                 items: [
-                    { label: 'Check-in Pemain', route: 'checkin.index', pattern: 'checkin.*', icon: QrCode, badge: 'QR', badgeColor: 'bg-sky-500/20 text-sky-400 border border-sky-500/30' },
-                    { label: 'Daftar Booking', route: 'bookings.index', pattern: 'bookings.*', icon: CalendarCheck },
-                    { label: 'Riwayat Pembayaran', route: 'payments.index', pattern: 'payments.*', icon: CreditCard },
+                    { label: 'Booking Saya', route: 'bookings.index', pattern: 'bookings.*', icon: CalendarCheck },
+                    { label: 'Riwayat Bayar', route: 'payments.index', pattern: 'payments.*', icon: CreditCard },
                 ],
             },
         ];
@@ -279,21 +279,24 @@ const navGroups = computed<NavGroup[]>(() => {
                             <div class="mt-0.5 flex items-center gap-1">
                                 <span
                                     v-if="$page.props.auth.user.role === 'admin'"
-                                    class="inline-flex items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9.5px] font-bold text-amber-400"
+                                    class="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9.5px] font-bold text-amber-400"
                                 >
-                                    🛡️ Admin
+                                    <Shield class="h-2.5 w-2.5" />
+                                    <span>Admin</span>
                                 </span>
                                 <span
                                     v-else-if="$page.props.auth.user.role === 'venue_owner'"
-                                    class="inline-flex items-center rounded-md border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[9.5px] font-bold text-blue-400"
+                                    class="inline-flex items-center gap-1 rounded-md border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[9.5px] font-bold text-blue-400"
                                 >
-                                    🏟️ Owner
+                                    <Building2 class="h-2.5 w-2.5" />
+                                    <span>Owner</span>
                                 </span>
                                 <span
                                     v-else
-                                    class="inline-flex items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-400"
+                                    class="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-bold text-emerald-400"
                                 >
-                                    🎾 Pemain
+                                    <User class="h-2.5 w-2.5" />
+                                    <span>Pemain</span>
                                 </span>
                             </div>
                         </div>

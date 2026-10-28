@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import {
+    Calendar,
     Check,
     ChevronRight,
     Clock,
+    Layers,
 } from '@lucide/vue';
 import { router } from '@inertiajs/vue3';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -195,63 +197,80 @@ const bookSelectedSlot = () => {
         id="court-visualizer"
         class="overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/60 p-6 shadow-2xl backdrop-blur-md sm:p-8"
     >
-        <!-- Board Controls -->
-        <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <!-- Court Selection Tabs -->
-            <div>
-                <span class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">Pilih Lapangan:</span>
-                <div class="flex flex-wrap gap-2">
-                    <button
-                        v-for="court in courts"
-                        :key="court.id"
-                        type="button"
-                        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition shadow-sm"
-                        :class="activeCourtId === court.id
-                            ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 shadow-md shadow-emerald-500/25 ring-2 ring-emerald-500/50 scale-[1.02]'
-                            : 'border border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white'"
-                        @click="activeCourtId = court.id; selectedSlot = null"
-                    >
-                        <span>{{ court.name }}</span>
-                        <span
-                            class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase"
-                            :class="activeCourtId === court.id ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400'"
-                        >
-                            {{ typeLabel(court.type) }}
+        <!-- Board Controls: 2-Tier Clean Hierarchy -->
+        <div class="space-y-4">
+            <!-- Tier 1: Toolbar Header (Context Title + Unified Date Switcher) -->
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                        <Layers class="h-3.5 w-3.5" />
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black uppercase tracking-wider text-white">Pilih Lapangan</span>
+                        <span class="rounded-full border border-slate-800 bg-slate-950/80 px-2 py-0.5 text-[10px] font-bold text-slate-400">
+                            {{ courts.length }} Lapangan
                         </span>
-                    </button>
+                    </div>
+                </div>
+
+                <!-- Unified Date Switcher Pill -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 hidden sm:inline">Tanggal:</span>
+                    <div class="inline-flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-950/90 p-1 shadow-inner shrink-0">
+                        <button
+                            type="button"
+                            class="rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+                            :class="currentDate === todayStr
+                                ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-extrabold'
+                                : 'text-slate-300 hover:text-white hover:bg-slate-800/70'"
+                            @click="changeDate(todayStr)"
+                        >
+                            Hari Ini
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-lg px-3 py-1.5 text-xs font-bold transition-all"
+                            :class="currentDate === tomorrowStr
+                                ? 'bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30 font-extrabold'
+                                : 'text-slate-300 hover:text-white hover:bg-slate-800/70'"
+                            @click="changeDate(tomorrowStr)"
+                        >
+                            Besok
+                        </button>
+                        <div class="h-4 w-px bg-slate-800 mx-0.5" />
+                        <div class="relative flex items-center pr-1">
+                            <input
+                                type="date"
+                                :value="currentDate"
+                                :min="todayStr"
+                                @change="changeDate(($event.target as HTMLInputElement).value)"
+                                class="h-7 rounded-lg border-0 bg-transparent px-2 text-xs font-semibold text-slate-200 focus:bg-slate-900 focus:outline-none focus:ring-1 focus:ring-emerald-500 [color-scheme:dark] cursor-pointer"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Date Switcher -->
-            <div class="flex flex-wrap items-center gap-2">
-                <span class="block w-full text-xs font-bold uppercase tracking-wider text-slate-400 sm:mr-1 sm:w-auto">Tanggal:</span>
+            <!-- Tier 2: Court Selection Pills (Full Width Row) -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar sm:flex-wrap sm:overflow-visible">
                 <button
+                    v-for="court in courts"
+                    :key="court.id"
                     type="button"
-                    class="rounded-xl px-3.5 py-2 text-xs font-bold transition shadow-sm"
-                    :class="currentDate === todayStr
-                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                        : 'border border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white'"
-                    @click="changeDate(todayStr)"
+                    class="group inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all shadow-sm"
+                    :class="activeCourtId === court.id
+                        ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-slate-950 shadow-md shadow-emerald-500/25 ring-2 ring-emerald-400/60 font-extrabold'
+                        : 'border border-slate-800/90 bg-slate-950/70 text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white'"
+                    @click="activeCourtId = court.id; selectedSlot = null"
                 >
-                    Hari Ini
+                    <span>{{ court.name }}</span>
+                    <span
+                        class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase transition-colors"
+                        :class="activeCourtId === court.id ? 'bg-slate-950/25 text-slate-950' : 'bg-slate-800 text-slate-400 group-hover:text-slate-300'"
+                    >
+                        {{ typeLabel(court.type) }}
+                    </span>
                 </button>
-                <button
-                    type="button"
-                    class="rounded-xl px-3.5 py-2 text-xs font-bold transition shadow-sm"
-                    :class="currentDate === tomorrowStr
-                        ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                        : 'border border-slate-800 bg-slate-950/80 text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white'"
-                    @click="changeDate(tomorrowStr)"
-                >
-                    Besok
-                </button>
-                <input
-                    type="date"
-                    :value="currentDate"
-                    :min="todayStr"
-                    @change="changeDate(($event.target as HTMLInputElement).value)"
-                    class="h-9 rounded-xl border border-slate-800 bg-slate-950/80 px-3 text-xs font-semibold text-white shadow-inner focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
             </div>
         </div>
 

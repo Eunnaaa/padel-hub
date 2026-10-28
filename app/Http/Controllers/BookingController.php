@@ -39,7 +39,7 @@ class BookingController extends Controller
         $data = $request->validated();
         $court = Court::with('venue')->findOrFail($data['court_id']);
 
-        abort_unless($court->status === 'available' && $court->venue->status === 'approved', 422, 'Lapangan tidak tersedia untuk dipesan.');
+        abort_unless($court->status === 'available' && $court->venue && $court->venue->status === 'approved', 422, 'Lapangan tidak tersedia untuk dipesan.');
 
         if ($court->maintenance_from && $court->maintenance_to) {
             if ($data['start_time'] < $court->maintenance_to && $data['end_time'] > $court->maintenance_from) {
@@ -141,7 +141,7 @@ class BookingController extends Controller
         $data = $request->validated();
         $court = Court::with('venue')->findOrFail($data['court_id']);
 
-        abort_unless($court->status === 'available' && $court->venue->status === 'approved', 422, 'Lapangan tidak tersedia.');
+        abort_unless($court->status === 'available' && $court->venue && $court->venue->status === 'approved', 422, 'Lapangan tidak tersedia.');
 
         if ($court->maintenance_from && $court->maintenance_to) {
             if ($data['start_time'] < $court->maintenance_to && $data['end_time'] > $court->maintenance_from) {

@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Booking extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'user_id', 'court_id', 'booking_date', 'start_time', 'end_time',
         'status', 'payment_status', 'total_amount', 'locked_until',
@@ -31,7 +34,7 @@ class Booking extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function court(): BelongsTo

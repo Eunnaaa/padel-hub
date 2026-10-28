@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Badge from '@/Components/ui/Badge.vue';
 import ConfirmDialog from '@/Components/ui/ConfirmDialog.vue';
-import { CalendarCheck, CheckCircle2, Clock, QrCode, User, XCircle } from '@lucide/vue';
+import { AlertTriangle, CalendarCheck, CheckCircle2, Clock, QrCode, User, XCircle } from '@lucide/vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
@@ -29,7 +29,7 @@ const setStatus = (b: (typeof props.bookings)[number], s: string, label: string)
 };
 
 const confirmStatus = () => {
-    router.patch(route('checkin.update-status', dialog.value.id), { status: dialog.value.status });
+    router.patch(route('checkin.update', dialog.value.id), { status: dialog.value.status });
     dialog.value.open = false;
 };
 </script>
@@ -122,9 +122,10 @@ const confirmStatus = () => {
                             <span>No Show</span>
                         </button>
                     </div>
-                    <p v-else class="mt-4 border-t border-slate-800/80 pt-4 text-xs text-amber-400">
-                        ⚠️ Belum dibayar — tunggu konfirmasi pembayaran sebelum melakukan check-in pemain.
-                    </p>
+                    <div v-else class="mt-4 flex items-center gap-2 border-t border-slate-800/80 pt-4 text-xs text-amber-400">
+                        <AlertTriangle class="h-4 w-4 shrink-0 text-amber-400" />
+                        <span>Belum dibayar — tunggu konfirmasi pembayaran sebelum melakukan check-in pemain.</span>
+                    </div>
                 </div>
 
                 <div v-if="!bookings.length" class="rounded-3xl border border-dashed border-slate-800 bg-slate-900/40 py-16 text-center">

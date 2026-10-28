@@ -39,6 +39,16 @@ test('venue owner dapat mengakses venue dashboard', function () {
             ->has('courtUsage'));
 });
 
+test('admin dapat mengakses venue dashboard', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $this->actingAs($admin)->get('/venue-dashboard')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('VenueDashboard/Index')
+            ->has('venues'));
+});
+
 test('player tidak dapat mengakses venue dashboard', function () {
     $player = User::factory()->create(['role' => 'player']);
 

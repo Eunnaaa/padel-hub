@@ -57,6 +57,17 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        $hasActiveBookings = $user->bookings()
+            ->whereIn('status', ['pending', 'confirmed', 'checked_in'])
+            ->whereDate('booking_date', '>=', today())
+            ->exists();
+
+        if ($hasActiveBookings) {
+            return back()->withErrors([
+                'password' => 'Akun tidak dapat dihapus karena Anda masih memiliki jadwal booking aktif. Silakan batalkan atau selesaikan sesi booking terlebih dahulu.',
+            ]);
+        }
+
         Auth::logout();
 
         $user->delete();

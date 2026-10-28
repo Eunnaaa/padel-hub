@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,6 +37,7 @@ class PaymentController extends Controller
 
         return Inertia::render('Payments/Invoice', [
             'booking' => $booking->load('court.venue', 'payment'),
+            'qrUrl' => URL::signedRoute('checkin.scan', ['booking' => $booking->id]),
         ]);
     }
 
@@ -184,7 +186,13 @@ class PaymentController extends Controller
             return to_route('bookings.index')->with('success', 'Payment recorded.');
         }
 
-        $snapToken = $this->createSnapToken($booking, $payment);
+        try {
+            $snapToken = $this->createSnapToken($booking, $payment);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Midtrans Snap Error: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Gagal memproses gateway pembayaran (Midtrans). Silakan coba lagi.']);
+        }
 
         return Inertia::render('Payments/Create', [
             'booking' => $booking->load(['court.venue', 'promo']),
@@ -201,7 +209,7 @@ class PaymentController extends Controller
         }
 
         $payload = json_decode($request->getContent(), true);
-        if (! is_array($payload) || ! isset($payload['signature_key'], $payload['order_id'])) {
+        if (! is_array($payload) || ! isset($payload['signature_key'], $payload['order_id'], $payload['status_code'], $payload['gross_amount'])) {
             return response()->json(['error' => 'invalid payload'], 400);
         }
 
@@ -234,7 +242,7 @@ class PaymentController extends Controller
         }
 
         $payment->update(['status' => $status]);
-        if ($status === 'paid') {
+        if ($status === 'paid' && $payment->booking) {
             $this->markPaid($payment->booking, $payment);
         } elseif ($status === 'failed') {
             $payment->booking?->update(['status' => 'expired']);
@@ -282,6 +290,10 @@ class PaymentController extends Controller
 
     private function markPaid(Booking $booking, Payment $payment): void
     {
+        if ($booking->payment_status === 'paid') {
+            return;
+        }
+
         $booking->update([
             'payment_status' => 'paid',
             'status' => 'confirmed',
@@ -292,9 +304,10 @@ class PaymentController extends Controller
             $booking->promo?->increment('used_count');
         }
 
-        $booking->user->notify(new BookingNotification(
+        $courtName = $booking->court?->name ?? 'Lapangan';
+        $booking->user?->notify(new BookingNotification(
             'Pembayaran dikonfirmasi',
-            "Pembayaran booking {$booking->court->name} sebesar Rp ".number_format((float) $booking->total_amount, 0, ',', '.').' diterima.',
+            "Pembayaran booking {$courtName} sebesar Rp ".number_format((float) $booking->total_amount, 0, ',', '.').' diterima.',
             route('payments.invoice', $booking),
         ));
     }

@@ -242,8 +242,9 @@ const statusLabel = (s: string) => {
                                     </span>
                                 </div>
 
-                                <h1 class="text-2xl font-black uppercase tracking-tight text-white sm:text-3xl">
-                                    Halo, {{ $page.props.auth.user.name }}! 👋
+                                <h1 class="flex items-center gap-2 text-2xl font-black uppercase tracking-tight text-white sm:text-3xl">
+                                    <span>Halo, {{ $page.props.auth.user.name }}!</span>
+                                    <Sparkles class="h-6 w-6 text-brand-accent animate-pulse" />
                                 </h1>
 
                                 <p class="max-w-lg text-xs text-white/70 sm:text-sm">
@@ -446,13 +447,13 @@ const statusLabel = (s: string) => {
                                         </div>
 
                                         <h3 class="text-lg font-bold tracking-tight text-white transition-colors group-hover:text-brand-accent sm:text-xl">
-                                            {{ b.court.name }} — {{ b.court.venue.name }}
+                                            {{ b.court?.name ?? 'Lapangan' }} — {{ b.court?.venue?.name ?? 'Venue' }}
                                         </h3>
 
                                         <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-white/60">
                                             <span class="flex items-center gap-1">
                                                 <MapPin class="h-3.5 w-3.5 text-brand-accent" />
-                                                {{ b.court.venue.city }}
+                                                {{ b.court?.venue?.city ?? 'Lokasi' }}
                                             </span>
                                             <span class="flex items-center gap-1 font-semibold text-white">
                                                 <Clock class="h-3.5 w-3.5 text-white/50" />

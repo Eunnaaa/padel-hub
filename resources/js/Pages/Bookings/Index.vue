@@ -11,6 +11,7 @@ import {
     FileText,
     MapPin,
     Plus,
+    Repeat,
     Search,
     Sparkles,
     XCircle,
@@ -84,9 +85,9 @@ const filteredBookings = computed(() => {
         // Search query
         if (searchQuery.value.trim()) {
             const q = searchQuery.value.toLowerCase().trim();
-            const venue = b.court.venue.name.toLowerCase();
-            const court = b.court.name.toLowerCase();
-            const city = b.court.venue.city.toLowerCase();
+            const venue = b.court?.venue?.name?.toLowerCase() ?? '';
+            const court = b.court?.name?.toLowerCase() ?? '';
+            const city = b.court?.venue?.city?.toLowerCase() ?? '';
             return venue.includes(q) || court.includes(q) || city.includes(q);
         }
 
@@ -105,7 +106,7 @@ const askCancel = (b: BookingItem, cancelSeries: boolean) => {
     dialog.value = {
         open: true,
         id: b.id,
-        label: `${b.court.venue.name} — ${b.court.name} · ${fmtDate(b.booking_date)}`,
+        label: `${b.court?.venue?.name ?? 'Venue'} — ${b.court?.name ?? 'Lapangan'} · ${fmtDate(b.booking_date)}`,
         cancelSeries,
     };
 };
@@ -268,23 +269,24 @@ const confirmCancel = () => {
                                 <div>
                                     <div class="flex flex-wrap items-center gap-2">
                                         <h3 class="text-base font-extrabold text-white">
-                                            {{ b.court.venue.name }}
+                                            {{ b.court?.venue?.name ?? 'Venue' }}
                                         </h3>
                                         <span class="rounded-md border border-slate-700 bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-300">
-                                            {{ b.court.name }}
+                                            {{ b.court?.name ?? 'Lapangan' }}
                                         </span>
                                         <span
                                             v-if="b.recurrence_rule"
-                                            class="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10.5px] font-bold text-emerald-400"
+                                            class="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10.5px] font-bold text-emerald-400"
                                         >
-                                            🔁 Mingguan
+                                            <Repeat class="h-3 w-3" />
+                                            <span>Mingguan</span>
                                         </span>
                                     </div>
 
                                     <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-400">
                                         <span class="flex items-center gap-1 text-slate-300">
                                             <MapPin class="h-3.5 w-3.5 text-emerald-400" />
-                                            {{ b.court.venue.city }}
+                                            {{ b.court?.venue?.city ?? 'Kota' }}
                                         </span>
                                         <span>•</span>
                                         <span class="flex items-center gap-1 font-semibold text-white">

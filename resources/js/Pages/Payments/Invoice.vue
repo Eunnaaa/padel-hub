@@ -24,6 +24,7 @@ const props = defineProps<{
             created_at: string;
         } | null;
     };
+    qrUrl?: string;
 }>();
 
 const fmt = (n: string) => Number(n).toLocaleString('id-ID');
@@ -50,7 +51,8 @@ const printInvoice = () => {
 
 onMounted(async () => {
     if (props.booking.payment_status === 'paid') {
-        qr.value = await QRCode.toDataURL(route('checkin.scan', props.booking.id), {
+        const qrContent = props.qrUrl || route('checkin.scan', props.booking.id);
+        qr.value = await QRCode.toDataURL(qrContent, {
             width: 220,
             margin: 1,
             color: {
@@ -139,11 +141,11 @@ onMounted(async () => {
                     <div class="relative z-10 mt-6 space-y-3.5 text-xs">
                         <div class="flex items-center justify-between text-slate-400 print:text-gray-600">
                             <span>Nama Venue</span>
-                            <span class="font-bold text-white print:text-black">{{ booking.court.venue.name }}</span>
+                            <span class="font-bold text-white print:text-black">{{ booking.court?.venue?.name ?? '—' }}</span>
                         </div>
                         <div class="flex items-center justify-between text-slate-400 print:text-gray-600">
                             <span>Lapangan</span>
-                            <span class="font-bold text-white print:text-black">{{ booking.court.name }}</span>
+                            <span class="font-bold text-white print:text-black">{{ booking.court?.name ?? '—' }}</span>
                         </div>
                         <div class="flex items-center justify-between text-slate-400 print:text-gray-600">
                             <span>Tanggal Bermain</span>
@@ -156,7 +158,7 @@ onMounted(async () => {
                         <div class="flex items-start justify-between text-slate-400 print:text-gray-600">
                             <span>Lokasi Venue</span>
                             <span class="max-w-[260px] text-right font-medium text-slate-300 print:text-black">
-                                {{ booking.court.venue.address }}, {{ booking.court.venue.city }}
+                                {{ booking.court?.venue?.address ?? '—' }}<template v-if="booking.court?.venue?.city">, {{ booking.court.venue.city }}</template>
                             </span>
                         </div>
                     </div>

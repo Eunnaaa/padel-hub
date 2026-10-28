@@ -48,6 +48,9 @@ class DashboardController extends Controller
             ->get();
 
         $selectedDate = $request->query('date', now()->toDateString());
+        if (! is_string($selectedDate) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $selectedDate)) {
+            $selectedDate = now()->toDateString();
+        }
         $todayDate = now()->toDateString();
 
         $courtBookings = Booking::query()

@@ -53,8 +53,10 @@ class AdminController extends Controller
     {
         $newStatus = $court->status === 'available' ? 'maintenance' : 'available';
         $court->update(['status' => $newStatus]);
+        $court->loadMissing('venue');
+        $venueName = $court->venue?->name ?? 'Venue';
 
-        return back()->with('success', "Status lapangan {$court->name} ({$court->venue->name}) berhasil diubah menjadi {$newStatus}.");
+        return back()->with('success', "Status lapangan {$court->name} ({$venueName}) berhasil diubah menjadi {$newStatus}.");
     }
 
     public function approveVenue(Venue $venue): RedirectResponse

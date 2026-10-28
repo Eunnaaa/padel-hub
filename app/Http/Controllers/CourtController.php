@@ -96,6 +96,6 @@ class CourtController extends Controller
 
     private function authorizeCourt(Court $court): void
     {
-        abort_unless(Auth::user()->isAdmin() || $court->venue->isOwnedBy(Auth::user()), 403);
+        abort_unless(Auth::user()->isAdmin() || ($court->venue && $court->venue->isOwnedBy(Auth::user())), 403);
     }
 }

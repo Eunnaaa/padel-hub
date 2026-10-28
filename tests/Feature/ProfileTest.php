@@ -131,7 +131,8 @@ test('user can delete their account', function () {
         ->assertRedirect('/');
 
     $this->assertGuest();
-    $this->assertNull($user->fresh());
+    $this->assertTrue($user->fresh()->trashed());
+    $this->assertNull(User::find($user->id));
 });
 
 test('correct password must be provided to delete account', function () {
@@ -149,4 +150,85 @@ test('correct password must be provided to delete account', function () {
         ->assertRedirect('/profile');
 
     $this->assertNotNull($user->fresh());
+});
+
+test('user tidak dapat menghapus akun jika memiliki booking aktif', function () {
+    $user = User::factory()->create();
+    $venue = \App\Models\Venue::create([
+        'name' => 'Venue Test Profile',
+        'slug' => 'venue-test-profile-'.\Illuminate\Support\Str::random(6),
+        'address' => 'Jl. Test',
+        'city' => 'Jakarta',
+        'status' => 'approved',
+    ]);
+    $court = \App\Models\Court::create([
+        'venue_id' => $venue->id,
+        'name' => 'Court P1',
+        'price_per_hour' => 100000,
+        'status' => 'available',
+    ]);
+
+    \App\Models\Booking::create([
+        'user_id' => $user->id,
+        'court_id' => $court->id,
+        'booking_date' => now()->addDay()->toDateString(),
+        'start_time' => '10:00',
+        'end_time' => '11:00',
+        'status' => 'confirmed',
+        'payment_status' => 'paid',
+        'total_amount' => 100000,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->from('/profile')
+        ->delete('/profile', [
+            'password' => 'password',
+        ]);
+
+    $response
+        ->assertSessionHasErrors('password')
+        ->assertRedirect('/profile');
+
+    expect($user->fresh())->not->toBeNull();
+});
+
+test('user yang dihapus berstatus soft-deleted dan tidak menghapus booking lampau', function () {
+    $user = User::factory()->create();
+    $venue = \App\Models\Venue::create([
+        'name' => 'Venue Test Profile 2',
+        'slug' => 'venue-test-profile-2-'.\Illuminate\Support\Str::random(6),
+        'address' => 'Jl. Test',
+        'city' => 'Jakarta',
+        'status' => 'approved',
+    ]);
+    $court = \App\Models\Court::create([
+        'venue_id' => $venue->id,
+        'name' => 'Court P2',
+        'price_per_hour' => 100000,
+        'status' => 'available',
+    ]);
+
+    $pastBooking = \App\Models\Booking::create([
+        'user_id' => $user->id,
+        'court_id' => $court->id,
+        'booking_date' => now()->subDay()->toDateString(),
+        'start_time' => '10:00',
+        'end_time' => '11:00',
+        'status' => 'finished',
+        'payment_status' => 'paid',
+        'total_amount' => 100000,
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->delete('/profile', [
+            'password' => 'password',
+        ])
+        ->assertRedirect('/');
+
+    expect(User::find($user->id))->toBeNull()
+        ->and($user->fresh()->trashed())->toBeTrue()
+        ->and(User::withTrashed()->find($user->id))->not->toBeNull()
+        ->and(\App\Models\Booking::find($pastBooking->id))->not->toBeNull();
 });

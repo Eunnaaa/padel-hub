@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CheckinRequest;
 use App\Models\Booking;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -34,8 +35,12 @@ class CheckinController extends Controller
         return back()->with('success', 'Status updated.');
     }
 
-    public function scan(Booking $booking): Response
+    public function scan(Request $request, Booking $booking): Response
     {
+        if ($request->has('signature')) {
+            abort_unless($request->hasValidSignature(), 403, 'URL QR code tidak valid atau telah dimanipulasi.');
+        }
+
         abort_unless($this->managesBooking($booking), 403);
         abort_unless($booking->payment_status === 'paid', 403, 'Belum dibayar.');
         abort_if(in_array($booking->status, ['cancelled', 'expired']), 422, 'Tiket booking ini sudah dibatalkan atau kedaluwarsa.');
@@ -47,6 +52,6 @@ class CheckinController extends Controller
 
     private function managesBooking(Booking $booking): bool
     {
-        return Auth::user()->isAdmin() || $booking->court->venue->isOwnedBy(Auth::user());
+        return Auth::user()->isAdmin() || ($booking->court?->venue?->isOwnedBy(Auth::user()) ?? false);
     }
 }

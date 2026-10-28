@@ -49,6 +49,18 @@ test('invoice hanya bisa diakses pemilik booking', function () {
     $this->actingAs($owner)->get("/payments/{$booking->id}/invoice")->assertOk();
 });
 
+test('invoice menyertakan signed qr url', function () {
+    $owner = User::factory()->create();
+    $booking = makeBooking($owner, $this->court);
+
+    $this->actingAs($owner)->get("/payments/{$booking->id}/invoice")
+        ->assertOk()
+        ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Payments/Invoice')
+            ->has('qrUrl')
+            ->where('qrUrl', fn ($url) => str_contains((string) $url, 'signature=')));
+});
+
 test('riwayat pembayaran hanya menampilkan transaksi milik user', function () {
     $owner = User::factory()->create();
     $other = User::factory()->create();
@@ -382,4 +394,18 @@ test('pembayaran berulang mengupdate record pending alih-alih membuat duplikat',
     expect(Payment::where('booking_id', $booking->id)->count())->toBe(1);
     expect($existingPayment->fresh()->method)->toBe('qris');
     expect($existingPayment->fresh()->status)->toBe('paid');
+});
+
+test('webhook midtrans menolak payload yang tidak lengkap dengan 400 Bad Request alih-alih error 500', function () {
+    config(['midtrans.server_key' => 'test-key']);
+
+    // Missing status_code and gross_amount
+    $this->postJson('/payments/notification', [
+        'order_id' => 'MID-INCOMPLETE',
+        'signature_key' => 'dummy-signature',
+    ])->assertStatus(400);
+
+    // Empty payload
+    $this->postJson('/payments/notification', [])
+        ->assertStatus(400);
 });

@@ -78,10 +78,16 @@ Route::post('payments/notification', [PaymentController::class, 'notification'])
 
 Route::middleware('auth')->group(function () {
     Route::resource('bookings', BookingController::class)->except(['show']);
-    Route::post('bookings/{booking}/apply-promo', [PaymentController::class, 'applyPromo'])->name('payments.apply-promo');
-    Route::delete('bookings/{booking}/remove-promo', [PaymentController::class, 'removePromo'])->name('payments.remove-promo');
-    Route::get('bookings/{booking}/pay', [PaymentController::class, 'create'])->name('payments.create');
-    Route::post('bookings/{booking}/pay', [PaymentController::class, 'store'])->name('payments.store');
+    Route::post('bookings/{booking}/apply-promo', [PaymentController::class, 'applyPromo'])
+        ->name('payments.apply-promo')
+        ->middleware('throttle:15,1');
+    Route::delete('bookings/{booking}/remove-promo', [PaymentController::class, 'removePromo'])
+        ->name('payments.remove-promo');
+    Route::get('bookings/{booking}/pay', [PaymentController::class, 'create'])
+        ->name('payments.create');
+    Route::post('bookings/{booking}/pay', [PaymentController::class, 'store'])
+        ->name('payments.store')
+        ->middleware('throttle:15,1');
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('payments/{booking}/invoice', [PaymentController::class, 'invoice'])->name('payments.invoice');
     Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');

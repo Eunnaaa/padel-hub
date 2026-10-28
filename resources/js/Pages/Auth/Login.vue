@@ -12,6 +12,7 @@ import {
     Mail,
     Shield,
     User,
+    Zap,
 } from '@lucide/vue';
 import { ref } from 'vue';
 
@@ -57,7 +58,10 @@ const submit = () => {
         <!-- Quick Demo Account Fillers -->
         <div class="mb-6 rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
             <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400 mb-2">
-                <span>⚡ Akses Cepat Akun Demo:</span>
+                <span class="inline-flex items-center gap-1.5">
+                    <Zap class="h-3.5 w-3.5 text-amber-400" />
+                    <span>Akses Cepat Akun Demo:</span>
+                </span>
                 <span class="text-slate-500">1-Klik isi</span>
             </div>
             <div class="grid grid-cols-2 gap-2">

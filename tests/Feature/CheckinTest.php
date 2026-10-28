@@ -159,3 +159,10 @@ test('check-in dan scan menolak booking yang sudah dibatalkan atau kedaluwarsa',
     $this->actingAs($this->owner)->patch("/checkin/{$booking->id}", ['status' => 'checked_in'])
         ->assertStatus(422);
 });
+
+test('scan dengan signature yang dimanipulasi akan ditolak', function () {
+    $booking = makePaidBooking(User::factory()->create(), $this->court);
+
+    $this->actingAs($this->owner)->get("/checkin/{$booking->id}/scan?signature=invalidsignature")
+        ->assertForbidden();
+});

@@ -79,8 +79,8 @@ const filteredPayments = computed(() => {
         // Search query
         if (searchQuery.value.trim()) {
             const q = searchQuery.value.toLowerCase().trim();
-            const venue = p.booking.court.venue.name.toLowerCase();
-            const court = p.booking.court.name.toLowerCase();
+            const venue = p.booking?.court?.venue?.name?.toLowerCase() ?? '';
+            const court = p.booking?.court?.name?.toLowerCase() ?? '';
             const refNo = (p.transaction_reference || '').toLowerCase();
             const method = (p.method || '').toLowerCase();
             return venue.includes(q) || court.includes(q) || refNo.includes(q) || method.includes(q);
@@ -244,10 +244,10 @@ const filteredPayments = computed(() => {
                                 <div>
                                     <div class="flex flex-wrap items-center gap-2">
                                         <h3 class="text-base font-extrabold text-white">
-                                            {{ p.booking.court.venue.name }}
+                                            {{ p.booking?.court?.venue?.name ?? 'Venue' }}
                                         </h3>
                                         <span class="rounded-md border border-slate-700 bg-slate-800 px-2 py-0.5 text-xs font-semibold text-slate-300">
-                                            {{ p.booking.court.name }}
+                                            {{ p.booking?.court?.name ?? 'Lapangan' }}
                                         </span>
                                     </div>
                                     <div class="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-slate-400">
